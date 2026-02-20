@@ -1,0 +1,94 @@
+#!/usr/bin/perl -w
+use lib "/usr/local/netfpga/lib/Perl5";
+use strict;
+
+# =================================================================
+# Register Definitions
+# =================================================================
+my $CPU_RESET_REG     = 0x2000300; 
+my $CPU_MEM_ADDR_REG  = 0x2000304; 
+my $CPU_MEM_WDATA_REG = 0x2000308; 
+my $CPU_MEM_CMD_REG   = 0x200030C; 
+
+my $CPU_MEM_RDATA_REG = 0x2000310;
+my $CPU_PC_REG        = 0x2000314;  
+my $CPU_INSTR_REG     = 0x2000318; 
+
+# =================================================================
+# Helper Functions
+# =================================================================
+sub regwrite {
+   my( $addr, $value ) = @_;
+   my $cmd = sprintf( "regwrite 0x%x 0x%08x", $addr, $value );
+   `$cmd`;
+}
+
+sub regread {
+   my( $addr ) = @_;
+   my $cmd = sprintf( "regread 0x%x", $addr );
+   my @out = `$cmd`;
+   my $result = $out[0];
+   if ( $result =~ m/Reg (0x[0-9a-f]+) \((\d+)\):\s+(0x[0-9a-f]+) \((\d+)\)/ ) {
+      $result = $3;
+   }
+   return $result;
+}
+
+sub usage {
+   print "Usage: cpureg <cmd> <options>\n";
+   print "  Commands:\n";
+   print "    reset <0|1>          : Set CPU Reset (1=Hold, 0=Run)\n";
+   print "    pc                   : Read current Program Counter\n";
+   print "    instr                : Read current Instruction\n";
+   print "    status               : Read all registers\n";
+   print "    write <addr> <data>  : Write one instruction to IMEM\n";
+}
+
+# =================================================================
+# Main Script Logic
+# =================================================================
+my $numargs = $#ARGV + 1;
+if( $numargs < 1 ) {
+   usage();
+   exit(1);
+}
+
+my $cmd = $ARGV[0];
+
+if ($cmd eq "reset") {
+   my $val = $ARGV[1] || 0;
+   regwrite($CPU_RESET_REG, $val);
+   print "CPU Reset set to: $val\n";
+
+} elsif ($cmd eq "pc") {
+   print "Current PC: ", regread( $CPU_PC_REG ), "\n";
+
+} elsif ($cmd eq "instr") {
+   print "Current Instr: ", regread( $CPU_INSTR_REG ), "\n";
+
+} elsif ($cmd eq "write") {
+   if ($numargs < 3) {
+      print "Error: write requires <addr> and <data>\n";
+      exit(1);
+   }
+   my $addr = hex($ARGV[1]);
+   my $data = hex($ARGV[2]);
+   
+   regwrite($CPU_MEM_ADDR_REG, $addr);
+   regwrite($CPU_MEM_WDATA_REG, $data);
+   regwrite($CPU_MEM_CMD_REG, 1);
+   regwrite($CPU_MEM_CMD_REG, 0);
+   
+   print sprintf("Wrote 0x%08x to IMEM address 0x%03x\n", $data, $addr);
+
+} elsif ($cmd eq "status") {
+   print "--- CPU Status ---\n";
+   print "Reset State: ", regread( $CPU_RESET_REG ), "\n";
+   print "PC:          ", regread( $CPU_PC_REG ), "\n";
+   print "Instruction: ", regread( $CPU_INSTR_REG ), "\n";
+
+} else {
+   print "Unrecognized command $cmd\n";
+   usage();
+   exit(1);
+}

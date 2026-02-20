@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nf:module xmlns:nf="http://www.NetFPGA.org/NF2_register_system" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.NetFPGA.org/NF2_register_system NF2_register_system.xsd ">
+	<nf:name>cpu</nf:name>
+	<nf:prefix>cpu</nf:prefix>
+	<nf:location>udp</nf:location>
+	<nf:description>Pipeline CPU Registers</nf:description>
+	<nf:blocksize>64</nf:blocksize>
+	<nf:registers>
+        
+		<nf:register>
+			<nf:name>reset</nf:name>
+			<nf:description>CPU Reset (1=Reset, 0=Run)</nf:description>
+			<nf:type>generic_software32</nf:type>
+		</nf:register>
+
+		<nf:register>
+			<nf:name>mem_addr</nf:name>
+			<nf:description>Programming Address</nf:description>
+			<nf:type>generic_software32</nf:type>
+		</nf:register>
+
+		<nf:register>
+			<nf:name>mem_wdata</nf:name>
+			<nf:description>Data to Write</nf:description>
+			<nf:type>generic_software32</nf:type>
+		</nf:register>
+
+		<nf:register>
+			<nf:name>mem_cmd</nf:name>
+			<nf:description>Cmd: 1=Write, 0=Read</nf:description>
+			<nf:type>generic_software32</nf:type>
+		</nf:register>
+
+		<nf:register>
+			<nf:name>mem_rdata</nf:name>
+			<nf:description>Read Back Result</nf:description>
+			<nf:type>generic_hardware32</nf:type>
+		</nf:register>
+
+		<nf:register>
+			<nf:name>pc</nf:name>
+			<nf:description>Debug: Current PC</nf:description>
+			<nf:type>generic_hardware32</nf:type>
+		</nf:register>
+
+		<nf:register>
+			<nf:name>instr</nf:name>
+			<nf:description>Debug: Current Instruction</nf:description>
+			<nf:type>generic_hardware32</nf:type>
+		</nf:register>
+
+	</nf:registers>
+</nf:module>
