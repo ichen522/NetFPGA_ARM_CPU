@@ -5,26 +5,46 @@ module pc(clk, rstb, wen, thread_id, next_pc, ex_branch, ex_thread_id, ex_branch
     input [8:0] next_pc, ex_branch_target;
     output reg [8:0] current_pc;
 
-    reg [8:0] pc_regs [3:0]; 
-    integer i;
+    reg [8:0] pc_reg_0, pc_reg_1, pc_reg_2, pc_reg_3;
 
-    always @(*) current_pc = pc_regs[thread_id];
+  
+    always @(*) begin
+        case (thread_id)
+            2'b00: current_pc = pc_reg_0;
+            2'b01: current_pc = pc_reg_1;
+            2'b10: current_pc = pc_reg_2;
+            2'b11: current_pc = pc_reg_3;
+            default: current_pc = 9'b0;
+        endcase
+    end
 
     always @(posedge clk or negedge rstb) begin
-    if (!rstb) begin
-        for (i = 0; i < 4; i = i + 1)
-            pc_regs[i] <= 9'b0;
-    end 
-    else begin
-        if (wen) begin
-            pc_regs[thread_id] <= next_pc;
-        end
+        if (!rstb) begin
+            pc_reg_0 <= 9'b0;
+            pc_reg_1 <= 9'b0;
+            pc_reg_2 <= 9'b0;
+            pc_reg_3 <= 9'b0;
+        end 
+        else begin
+            if (wen) begin
+                case (thread_id)
+                    2'b00: pc_reg_0 <= next_pc;
+                    2'b01: pc_reg_1 <= next_pc;
+                    2'b10: pc_reg_2 <= next_pc;
+                    2'b11: pc_reg_3 <= next_pc;
+                endcase
+            end
 
-        if (ex_branch) begin
-            pc_regs[ex_thread_id] <= ex_branch_target;
+            if (ex_branch) begin
+                case (ex_thread_id)
+                    2'b00: pc_reg_0 <= ex_branch_target;
+                    2'b01: pc_reg_1 <= ex_branch_target;
+                    2'b10: pc_reg_2 <= ex_branch_target;
+                    2'b11: pc_reg_3 <= ex_branch_target;
+                endcase
+            end
         end
     end
-end
 endmodule
 
 `timescale 1 ns / 100 ps
@@ -428,30 +448,44 @@ module imm_gen (instr, imm_src, imm_out);
 endmodule
 
 `timescale 1 ns / 100 ps
+`timescale 1 ns / 100 ps
 module cpsr_array (clk, rstb, thread_id, update_en, alu_flags, curr_flags);
     input  wire       clk;
     input  wire       rstb;
     input  wire [1:0] thread_id;  
     input  wire       update_en;  
     input  wire [3:0] alu_flags;  
-    output wire [3:0] curr_flags;  
+    output reg  [3:0] curr_flags;  
 
-    reg [3:0] cpsr_regs [0:3];
-    integer i;
+    reg [3:0] cpsr_reg_0, cpsr_reg_1, cpsr_reg_2, cpsr_reg_3;
 
-    assign curr_flags = cpsr_regs[thread_id];
+    always @(*) begin
+        case (thread_id)
+            2'b00: curr_flags = cpsr_reg_0;
+            2'b01: curr_flags = cpsr_reg_1;
+            2'b10: curr_flags = cpsr_reg_2;
+            2'b11: curr_flags = cpsr_reg_3;
+            default: curr_flags = 4'b0000;
+        endcase
+    end
 
     always @(posedge clk or negedge rstb) begin
         if (!rstb) begin
-            for (i = 0; i < 4; i = i + 1)
-                cpsr_regs[i] <= 4'b0000;
+            cpsr_reg_0 <= 4'b0000;
+            cpsr_reg_1 <= 4'b0000;
+            cpsr_reg_2 <= 4'b0000;
+            cpsr_reg_3 <= 4'b0000;
         end 
         else if (update_en) begin
-            cpsr_regs[thread_id] <= alu_flags;
+            case (thread_id)
+                2'b00: cpsr_reg_0 <= alu_flags;
+                2'b01: cpsr_reg_1 <= alu_flags;
+                2'b10: cpsr_reg_2 <= alu_flags;
+                2'b11: cpsr_reg_3 <= alu_flags;
+            endcase
         end
     end
 endmodule
-
 `timescale 1 ns / 100 ps
 module data_memory (
     input  wire        clk,
