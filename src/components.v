@@ -48,27 +48,26 @@ module pc(clk, rstb, wen, thread_id, next_pc, ex_branch, ex_thread_id, ex_branch
 endmodule
 
 `timescale 1 ns / 100 ps
-module imem_bram (clk, addr, wen, din, inst);
+module imem_bram (clk, addr, thread_id,wen, din, inst,rstb);
     input  wire        clk;
-    input  wire [8:0]  addr;
+    input  wire [10:0]  addr;
+    input  wire        rstb;
     input  wire        wen;       
     input  wire [31:0] din;       
     output reg  [31:0] inst;
-
-  
+    input  wire [1:0]  thread_id;
     reg [31:0] ram_array [0:511];
 
     initial begin
         $readmemh("inst.mem", ram_array);
     end
 
+    wire [8:0] real_addr = (!rstb) ? addr[10:2] : {thread_id, addr[8:2]};
     always @(posedge clk) begin
-        
         if (wen) begin
-            ram_array[addr[8:2]] <= din;
+            ram_array[real_addr] <= din;
         end
-        
-        inst <= ram_array[addr[8:2]];
+        inst <= ram_array[real_addr];
     end
 endmodule
 
@@ -495,9 +494,8 @@ module data_memory (
     input  wire [31:0] write_data, 
     output reg  [31:0] read_data   
 );
-
-    reg [31:0] dmem [0:255];
-    wire [7:0] word_addr = addr[9:2];
+    reg [31:0] dmem [0:1023];
+    wire [9:0] word_addr = addr[11:2];
 
     initial begin
         $readmemh("data_init.hex", dmem);
@@ -507,7 +505,6 @@ module data_memory (
         if (mem_write) begin
             dmem[word_addr] <= write_data;
         end
-        
         if (mem_read) begin
             read_data <= dmem[word_addr];
         end else begin

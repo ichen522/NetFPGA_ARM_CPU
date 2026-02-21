@@ -70,18 +70,20 @@ pc PC (
     .current_pc(current_pc)
 );
 
-wire [8:0]  actual_imem_addr;
+wire [10:0]  actual_imem_addr;
 wire        actual_imem_wen;
 wire [31:0] actual_imem_wdata;
 
-assign actual_imem_addr  = (!sys_rstb) ? sw_mem_addr[8:0] : current_pc;
+assign actual_imem_addr  = (!sys_rstb) ? sw_mem_addr[10:0] : {2'b00, current_pc};
 assign actual_imem_wen   = (!sys_rstb) ? (sw_mem_cmd == 32'd1) : 1'b0; 
 assign actual_imem_wdata = (!sys_rstb) ? sw_mem_wdata : 32'd0;
 
 imem_bram  IMEM(
     .clk(clk), 
+    .rstb(sys_rstb),
     .addr(actual_imem_addr), 
-    .wen(actual_imem_wen),       
+    .wen(actual_imem_wen), 
+    .thread_id(thread_id),      
     .din(actual_imem_wdata),     
     .inst(inst)
 );
